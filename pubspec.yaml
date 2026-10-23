@@ -79,6 +79,9 @@ flutter:
   assets:
     - assets/models/
     - assets/images/
+    - assets/luts/flog/
+    - assets/luts/flog2/
+    - assets/luts/standard/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
