@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'services/darkroom/darkroom_service.dart';
 import 'services/film_engine/film_engine.dart';
 import 'services/film_engine/lut_manager.dart';
 import 'services/film_engine/lut_processor.dart';
@@ -33,13 +34,16 @@ void main() async {
   final photoService = PhotoService();
 
   final recipeProvider = RecipeProvider();
-  // Initialize offline cache and start remote background sync
-  recipeProvider.initialize();
+  await recipeProvider.initialize();
+
+  final darkroomService = DarkroomService();
+  await darkroomService.initialize();
 
   runApp(CheeseraApp(
     filmEngine: filmEngine,
     photoService: photoService,
     recipeProvider: recipeProvider,
+    darkroomService: darkroomService,
   ));
 }
 
@@ -47,12 +51,14 @@ class CheeseraApp extends StatelessWidget {
   final FilmEngine filmEngine;
   final PhotoService photoService;
   final RecipeProvider recipeProvider;
+  final DarkroomService darkroomService;
 
   const CheeseraApp({
     super.key,
     required this.filmEngine,
     required this.photoService,
     required this.recipeProvider,
+    required this.darkroomService,
   });
 
   @override
@@ -65,6 +71,7 @@ class CheeseraApp extends StatelessWidget {
         filmEngine: filmEngine,
         photoService: photoService,
         recipeProvider: recipeProvider,
+        darkroomService: darkroomService,
       ),
     );
   }

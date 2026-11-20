@@ -18,6 +18,9 @@ dependencies:
   image_picker: ^1.1.2
   file_picker: ^8.0.0
   
+  # Sensors for shake-to-develop darkroom agitation
+  sensors_plus: ^6.1.0
+  
   # Media saving & exporting
   gal: ^2.3.1
   share_plus: ^10.0.0
