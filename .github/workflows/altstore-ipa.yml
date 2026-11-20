@@ -19,7 +19,7 @@ jobs:
           channel: stable
 
       - name: Ensure iOS project exists
-        run: flutter create --platforms=ios
+        run: flutter create --platforms=ios .
 
       - name: Install dependencies
         run: flutter pub get
