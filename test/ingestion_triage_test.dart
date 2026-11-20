@@ -7,6 +7,7 @@ import 'package:cheesera/services/watched_folder/ingestion_rule_engine.dart';
 import 'package:cheesera/services/watched_folder/watched_folder_models.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Watched Folder Rule Engine & Triage Tests', () {
     test('IngestionRuleEngine matches Fujifilm camera files (DSCF*) to Classic Chrome', () {
       final recipeProvider = RecipeProvider();

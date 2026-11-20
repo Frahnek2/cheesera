@@ -8,6 +8,7 @@ import 'package:cheesera/services/llm/image_feature_extractor.dart';
 import 'package:cheesera/services/llm/llm_models.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('On-Device Local LLM & Heuristic Curation Tests', () {
     late DefaultLlmCurationService service;
     late List<FilmRecipe> recipes;
