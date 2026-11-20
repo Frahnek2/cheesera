@@ -231,3 +231,7 @@ lib/
   - Remote sync and offline cache write verification.
   - Network unreachable fallback to local offline cache.
   - Corrupted cache fallback to built-in defaults.
+
+> **Warning:** This project is released under a Proprietary License. See the LICENSE.md file for usage restrictions and intellectual property details.
+> 
+> Copyright (c) 2026 Franciszek Skalski. All rights reserved.
