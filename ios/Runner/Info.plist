@@ -24,12 +24,23 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	
+	<!-- Permissions for camera capture & camera roll saving -->
 	<key>NSCameraUsageDescription</key>
 	<string>Cheesera needs camera access to capture analog-style film photographs.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Cheesera needs access to your photo library to import photos for film simulation grading.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Cheesera needs permission to save graded film photographs to your camera roll.</string>
+	
+	<!-- External Storage / SD card / USB-C camera document picker support -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

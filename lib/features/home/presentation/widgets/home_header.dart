@@ -4,29 +4,35 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/haptics_util.dart';
 import '../../../../widgets/tactile_button.dart';
 
-/// Minimalist analog brand header with disposable camera, darkroom tank, and import triggers.
+/// Minimalist analog brand header with SD card import, watched folder, disposable camera, and darkroom triggers.
 class HomeHeader extends StatelessWidget {
   final VoidCallback onCameraTap;
   final VoidCallback onDisposableTap;
   final VoidCallback onDarkroomTap;
+  final VoidCallback onSdImportTap;
+  final VoidCallback onWatchedFolderTap;
   final VoidCallback onImportTap;
   final VoidCallback onRecipesTap;
   final int activeDevelopingCount;
+  final bool isWatchedFolderActive;
 
   const HomeHeader({
     super.key,
     required this.onCameraTap,
     required this.onDisposableTap,
     required this.onDarkroomTap,
+    required this.onSdImportTap,
+    required this.onWatchedFolderTap,
     required this.onImportTap,
     required this.onRecipesTap,
     this.activeDevelopingCount = 0,
+    this.isWatchedFolderActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: const BoxDecoration(
         color: AppColors.darkroomBackground,
         border: Border(bottom: BorderSide(color: AppColors.surfaceBorder, width: 1.0)),
@@ -35,7 +41,7 @@ class HomeHeader extends StatelessWidget {
         bottom: false,
         child: Row(
           children: [
-            // Logo & Analog Badge
+            // Brand Logo
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -44,18 +50,18 @@ class HomeHeader extends StatelessWidget {
                   children: [
                     Text(
                       'CHEESERA',
-                      style: AppTypography.brandLogo.copyWith(fontSize: 16),
+                      style: AppTypography.brandLogo.copyWith(fontSize: 15),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: AppColors.amberAccent.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: AppColors.amberAccent.withOpacity(0.4)),
                       ),
                       child: Text(
-                        'FILM LAB',
+                        'LAB',
                         style: AppTypography.filmMetadata.copyWith(
                           fontSize: 7,
                           color: AppColors.amberAccent,
@@ -65,11 +71,11 @@ class HomeHeader extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  'ANALOG COLOR & GRAIN',
+                  'COLOR & INGESTION',
                   style: AppTypography.filmMetadata.copyWith(
                     fontSize: 7,
                     color: AppColors.textTertiary,
-                    letterSpacing: 1.0,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ],
@@ -77,7 +83,54 @@ class HomeHeader extends StatelessWidget {
 
             const Spacer(),
 
-            // Disposable Camera Mode Trigger
+            // SD Card / Camera Media Import & Fast-Triage
+            TactileButton(
+              backgroundColor: const Color(0xFF1B2329),
+              borderColor: AppColors.slideTeal.withOpacity(0.4),
+              padding: const EdgeInsets.all(7),
+              borderRadius: 8,
+              onPressed: () {
+                HapticsUtil.selectionTick();
+                onSdImportTap();
+              },
+              child: const Icon(Icons.sd_card_outlined, size: 17, color: AppColors.slideTeal),
+            ),
+
+            const SizedBox(width: 5),
+
+            // Watched Folder Monitor Trigger (with active green dot indicator)
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                TactileButton(
+                  backgroundColor: AppColors.surfaceElevated,
+                  padding: const EdgeInsets.all(7),
+                  borderRadius: 8,
+                  onPressed: () {
+                    HapticsUtil.selectionTick();
+                    onWatchedFolderTap();
+                  },
+                  child: const Icon(Icons.folder_shared_outlined, size: 17, color: AppColors.amberAccent),
+                ),
+                if (isWatchedFolderActive)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.slideTeal,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(width: 5),
+
+            // Disposable Camera Mode
             TactileButton(
               backgroundColor: const Color(0xFF222630),
               padding: const EdgeInsets.all(7),
@@ -86,12 +139,12 @@ class HomeHeader extends StatelessWidget {
                 HapticsUtil.lightSnap();
                 onDisposableTap();
               },
-              child: const Icon(Icons.videocam_outlined, size: 18, color: AppColors.amberAccent),
+              child: const Icon(Icons.videocam_outlined, size: 17, color: AppColors.amberAccent),
             ),
 
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
 
-            // Darkroom Chemical Tank Trigger (with live developing badge)
+            // Darkroom Tank (with badge)
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -108,58 +161,32 @@ class HomeHeader extends StatelessWidget {
                   },
                   child: Icon(
                     Icons.science_outlined,
-                    size: 18,
+                    size: 17,
                     color: activeDevelopingCount > 0 ? AppColors.filmRed : AppColors.textPrimary,
                   ),
                 ),
                 if (activeDevelopingCount > 0)
                   Positioned(
-                    top: -4,
-                    right: -4,
+                    top: -3,
+                    right: -3,
                     child: Container(
-                      padding: const EdgeInsets.all(3),
+                      padding: const EdgeInsets.all(2.5),
                       decoration: const BoxDecoration(
                         color: AppColors.filmRed,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '$activeDevelopingCount',
-                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: const TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                   ),
               ],
             ),
 
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
 
-            // Recipe catalog
-            TactileButton(
-              padding: const EdgeInsets.all(7),
-              borderRadius: 8,
-              onPressed: () {
-                HapticsUtil.selectionTick();
-                onRecipesTap();
-              },
-              child: const Icon(Icons.style_outlined, size: 18),
-            ),
-
-            const SizedBox(width: 6),
-
-            // Import from camera roll
-            TactileButton(
-              padding: const EdgeInsets.all(7),
-              borderRadius: 8,
-              onPressed: () {
-                HapticsUtil.selectionTick();
-                onImportTap();
-              },
-              child: const Icon(Icons.photo_library_outlined, size: 18),
-            ),
-
-            const SizedBox(width: 6),
-
-            // Shutter Camera Capture
+            // Camera Capture Shutter
             TactileButton(
               backgroundColor: AppColors.amberAccent,
               foregroundColor: Colors.black,
@@ -169,7 +196,7 @@ class HomeHeader extends StatelessWidget {
                 HapticsUtil.shutterClick();
                 onCameraTap();
               },
-              child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.black),
+              child: const Icon(Icons.camera_alt_rounded, size: 17, color: Colors.black),
             ),
           ],
         ),

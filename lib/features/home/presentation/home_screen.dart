@@ -5,23 +5,30 @@ import '../../../core/utils/haptics_util.dart';
 import '../../../models/film_recipe.dart';
 import '../../../models/photo_item.dart';
 import '../../../services/darkroom/darkroom_service.dart';
+import '../../../services/external_media/media_source_adapter.dart';
+import '../../../services/external_media/media_volume.dart';
 import '../../../services/film_engine/film_engine.dart';
 import '../../../services/media/photo_service.dart';
 import '../../../services/recipe_service/recipe_provider.dart';
+import '../../../services/watched_folder/watched_folder_service.dart';
 import '../../../widgets/film_frame_card.dart';
 import '../../../widgets/tactile_button.dart';
 import '../../darkroom/presentation/darkroom_screen.dart';
 import '../../disposable_camera/presentation/disposable_camera_screen.dart';
 import '../../editor/presentation/editor_screen.dart';
+import '../../triage/presentation/fast_triage_screen.dart';
+import '../../watched_folder/presentation/watched_folder_screen.dart';
 import 'widgets/home_header.dart';
 import 'widgets/recipe_catalog_sheet.dart';
 
-/// Main home gallery & feed view.
+/// Main home gallery & feed view with automated ingestion and triage workflows.
 class HomeScreen extends StatefulWidget {
   final FilmEngine filmEngine;
   final PhotoService photoService;
   final RecipeProvider recipeProvider;
   final DarkroomService darkroomService;
+  final WatchedFolderService watchedFolderService;
+  final MediaSourceAdapter mediaAdapter;
 
   const HomeScreen({
     super.key,
@@ -29,6 +36,8 @@ class HomeScreen extends StatefulWidget {
     required this.photoService,
     required this.recipeProvider,
     required this.darkroomService,
+    required this.watchedFolderService,
+    required this.mediaAdapter,
   });
 
   @override
@@ -43,16 +52,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _photos = widget.photoService.getInitialSamplePhotos();
-    widget.darkroomService.addListener(_onDarkroomUpdate);
+    widget.darkroomService.addListener(_onServiceUpdate);
+    widget.watchedFolderService.addListener(_onServiceUpdate);
   }
 
   @override
   void dispose() {
-    widget.darkroomService.removeListener(_onDarkroomUpdate);
+    widget.darkroomService.removeListener(_onServiceUpdate);
+    widget.watchedFolderService.removeListener(_onServiceUpdate);
     super.dispose();
   }
 
-  void _onDarkroomUpdate() {
+  void _onServiceUpdate() {
     if (mounted) setState(() {});
   }
 
@@ -132,6 +143,128 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openWatchedFolder() {
+    HapticsUtil.selectionTick();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WatchedFolderScreen(
+          watchedFolderService: widget.watchedFolderService,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSdMediaImport() async {
+    HapticsUtil.selectionTick();
+    final volumes = await widget.mediaAdapter.detectConnectedVolumes();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text('CAMERA & EXTERNAL MEDIA', style: AppTypography.filmHeadline.copyWith(fontSize: 16)),
+              Text('Select an SD card or camera folder for rapid culling & triage.', style: AppTypography.caption),
+              const Divider(color: AppColors.surfaceBorder, height: 20),
+
+              if (volumes.isNotEmpty) ...[
+                ...volumes.map((vol) {
+                  return ListTile(
+                    leading: const Icon(Icons.sd_card_rounded, color: AppColors.slideTeal),
+                    title: Text(vol.name, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${vol.photoCount} photos detected • ${vol.path}', style: AppTypography.caption),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _launchTriageForVolume(vol);
+                    },
+                  );
+                }),
+              ],
+
+              // Browse directory button
+              ListTile(
+                leading: const Icon(Icons.folder_open_rounded, color: AppColors.amberAccent),
+                title: const Text('Browse Folder / SD Tree (SAF / Files)'),
+                subtitle: const Text('Pick any connected USB-C drive or camera DCIM'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final picked = await widget.mediaAdapter.pickDirectoryVolume();
+                  if (picked != null) {
+                    _launchTriageForVolume(picked);
+                  }
+                },
+              ),
+
+              // Mock Camera for testing / simulator
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.textTertiary),
+                title: const Text('Simulated SD Card (Fujifilm X-T5 64GB)'),
+                subtitle: const Text('Quick test triage with sample camera exposures'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  const mockVol = MediaVolume(
+                    id: 'mock_fuji_sd',
+                    name: 'FUJIFILM X-T5 SDHC',
+                    path: '/mock/fuji/dcim',
+                    type: MediaVolumeType.sdCard,
+                    photoCount: 5,
+                  );
+                  _launchTriageForVolume(mockVol);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _launchTriageForVolume(MediaVolume volume) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FastTriageScreen(
+          volume: volume,
+          filmEngine: widget.filmEngine,
+          recipeProvider: widget.recipeProvider,
+          mediaAdapter: widget.mediaAdapter,
+          onImportCompleted: (imported) {
+            setState(() {
+              _photos.insertAll(0, imported);
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Successfully imported ${imported.length} culled negatives!'),
+                backgroundColor: AppColors.slideTeal,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   void _openRecipeCatalog() {
     showModalBottomSheet(
       context: context,
@@ -141,7 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
         recipeProvider: widget.recipeProvider,
         onSelectRecipe: (selected) {
           if (_photos.isNotEmpty) {
-            // Queue into Darkroom with selected recipe
             _openDarkroom(
               initialQueue: [_photos.first],
               initialRecipe: selected,
@@ -176,6 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final activeDarkroomCount = widget.darkroomService.activeBatches.length;
+    final isWatchedFolderActive = widget.watchedFolderService.isMonitoring;
 
     return Scaffold(
       backgroundColor: AppColors.darkroomBackground,
@@ -186,9 +319,12 @@ class _HomeScreenState extends State<HomeScreen> {
             onCameraTap: _handleCameraCapture,
             onDisposableTap: _openDisposableCamera,
             onDarkroomTap: () => _openDarkroom(),
+            onSdImportTap: _openSdMediaImport,
+            onWatchedFolderTap: _openWatchedFolder,
             onImportTap: _handleGalleryImport,
             onRecipesTap: _openRecipeCatalog,
             activeDevelopingCount: activeDarkroomCount,
+            isWatchedFolderActive: isWatchedFolderActive,
           ),
 
           // Active Darkroom Developing Tank Banner
@@ -240,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             filmEngine: widget.filmEngine,
                             onTap: () => _openEditor(photo),
                           ),
-                          // Quick "Shake to Develop in Tank" Action
+                          // Quick Action Row
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
                             child: Row(
@@ -300,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Shoot a disposable roll or import a photo to begin developing.',
+            'Import from SD card, shoot a roll, or monitor a folder to begin.',
             style: AppTypography.caption,
           ),
           const SizedBox(height: 20),

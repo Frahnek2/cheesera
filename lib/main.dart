@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'services/darkroom/darkroom_service.dart';
+import 'services/external_media/media_source_adapter.dart';
 import 'services/film_engine/film_engine.dart';
 import 'services/film_engine/lut_manager.dart';
 import 'services/film_engine/lut_processor.dart';
 import 'services/media/photo_service.dart';
 import 'services/recipe_service/recipe_provider.dart';
+import 'services/watched_folder/watched_folder_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,11 +41,18 @@ void main() async {
   final darkroomService = DarkroomService();
   await darkroomService.initialize();
 
+  const mediaAdapter = PlatformMediaSourceAdapter();
+
+  final watchedFolderService = WatchedFolderService(recipeProvider: recipeProvider);
+  await watchedFolderService.initialize();
+
   runApp(CheeseraApp(
     filmEngine: filmEngine,
     photoService: photoService,
     recipeProvider: recipeProvider,
     darkroomService: darkroomService,
+    watchedFolderService: watchedFolderService,
+    mediaAdapter: mediaAdapter,
   ));
 }
 
@@ -52,6 +61,8 @@ class CheeseraApp extends StatelessWidget {
   final PhotoService photoService;
   final RecipeProvider recipeProvider;
   final DarkroomService darkroomService;
+  final WatchedFolderService watchedFolderService;
+  final MediaSourceAdapter mediaAdapter;
 
   const CheeseraApp({
     super.key,
@@ -59,6 +70,8 @@ class CheeseraApp extends StatelessWidget {
     required this.photoService,
     required this.recipeProvider,
     required this.darkroomService,
+    required this.watchedFolderService,
+    required this.mediaAdapter,
   });
 
   @override
@@ -72,6 +85,8 @@ class CheeseraApp extends StatelessWidget {
         photoService: photoService,
         recipeProvider: recipeProvider,
         darkroomService: darkroomService,
+        watchedFolderService: watchedFolderService,
+        mediaAdapter: mediaAdapter,
       ),
     );
   }
