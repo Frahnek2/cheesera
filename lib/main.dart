@@ -7,6 +7,7 @@ import 'services/external_media/media_source_adapter.dart';
 import 'services/film_engine/film_engine.dart';
 import 'services/film_engine/lut_manager.dart';
 import 'services/film_engine/lut_processor.dart';
+import 'services/llm/default_llm_curation_service.dart';
 import 'services/media/photo_service.dart';
 import 'services/recipe_service/recipe_provider.dart';
 import 'services/watched_folder/watched_folder_service.dart';
@@ -46,6 +47,8 @@ void main() async {
   final watchedFolderService = WatchedFolderService(recipeProvider: recipeProvider);
   await watchedFolderService.initialize();
 
+  final llmService = DefaultLlmCurationService();
+
   runApp(CheeseraApp(
     filmEngine: filmEngine,
     photoService: photoService,
@@ -53,6 +56,7 @@ void main() async {
     darkroomService: darkroomService,
     watchedFolderService: watchedFolderService,
     mediaAdapter: mediaAdapter,
+    llmService: llmService,
   ));
 }
 
@@ -63,6 +67,7 @@ class CheeseraApp extends StatelessWidget {
   final DarkroomService darkroomService;
   final WatchedFolderService watchedFolderService;
   final MediaSourceAdapter mediaAdapter;
+  final DefaultLlmCurationService llmService;
 
   const CheeseraApp({
     super.key,
@@ -72,6 +77,7 @@ class CheeseraApp extends StatelessWidget {
     required this.darkroomService,
     required this.watchedFolderService,
     required this.mediaAdapter,
+    required this.llmService,
   });
 
   @override
@@ -87,6 +93,7 @@ class CheeseraApp extends StatelessWidget {
         darkroomService: darkroomService,
         watchedFolderService: watchedFolderService,
         mediaAdapter: mediaAdapter,
+        llmService: llmService,
       ),
     );
   }

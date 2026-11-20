@@ -8,6 +8,7 @@ import '../../../services/darkroom/darkroom_service.dart';
 import '../../../services/external_media/media_source_adapter.dart';
 import '../../../services/external_media/media_volume.dart';
 import '../../../services/film_engine/film_engine.dart';
+import '../../../services/llm/llm_curation_service.dart';
 import '../../../services/media/photo_service.dart';
 import '../../../services/recipe_service/recipe_provider.dart';
 import '../../../services/watched_folder/watched_folder_service.dart';
@@ -16,12 +17,13 @@ import '../../../widgets/tactile_button.dart';
 import '../../darkroom/presentation/darkroom_screen.dart';
 import '../../disposable_camera/presentation/disposable_camera_screen.dart';
 import '../../editor/presentation/editor_screen.dart';
+import '../../llm/presentation/widgets/local_model_settings_sheet.dart';
 import '../../triage/presentation/fast_triage_screen.dart';
 import '../../watched_folder/presentation/watched_folder_screen.dart';
 import 'widgets/home_header.dart';
 import 'widgets/recipe_catalog_sheet.dart';
 
-/// Main home gallery & feed view with automated ingestion and triage workflows.
+/// Main home gallery & feed view with automated ingestion, triage, and local AI curation.
 class HomeScreen extends StatefulWidget {
   final FilmEngine filmEngine;
   final PhotoService photoService;
@@ -29,6 +31,7 @@ class HomeScreen extends StatefulWidget {
   final DarkroomService darkroomService;
   final WatchedFolderService watchedFolderService;
   final MediaSourceAdapter mediaAdapter;
+  final LlmCurationService llmService;
 
   const HomeScreen({
     super.key,
@@ -38,6 +41,7 @@ class HomeScreen extends StatefulWidget {
     required this.darkroomService,
     required this.watchedFolderService,
     required this.mediaAdapter,
+    required this.llmService,
   });
 
   @override
@@ -154,6 +158,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openLlmSettings() {
+    HapticsUtil.selectionTick();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LocalModelSettingsSheet(
+        llmService: widget.llmService,
+      ),
+    );
+  }
+
   Future<void> _openSdMediaImport() async {
     HapticsUtil.selectionTick();
     final volumes = await widget.mediaAdapter.detectConnectedVolumes();
@@ -202,7 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 }),
               ],
 
-              // Browse directory button
               ListTile(
                 leading: const Icon(Icons.folder_open_rounded, color: AppColors.amberAccent),
                 title: const Text('Browse Folder / SD Tree (SAF / Files)'),
@@ -216,7 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
 
-              // Mock Camera for testing / simulator
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: AppColors.textTertiary),
                 title: const Text('Simulated SD Card (Fujifilm X-T5 64GB)'),
@@ -249,6 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
           filmEngine: widget.filmEngine,
           recipeProvider: widget.recipeProvider,
           mediaAdapter: widget.mediaAdapter,
+          llmService: widget.llmService,
           onImportCompleted: (imported) {
             setState(() {
               _photos.insertAll(0, imported);
@@ -291,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
           photo: photo,
           filmEngine: widget.filmEngine,
           recipeProvider: widget.recipeProvider,
+          llmService: widget.llmService,
         ),
       ),
     );
@@ -309,8 +325,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final activeDarkroomCount = widget.darkroomService.activeBatches.length;
     final isWatchedFolderActive = widget.watchedFolderService.isMonitoring;
+    final isLlmLoaded = widget.llmService.isModelLoaded;
 
-    return Scaffold(
+  return Scaffold(
       backgroundColor: AppColors.darkroomBackground,
       body: Column(
         children: [
@@ -321,13 +338,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onDarkroomTap: () => _openDarkroom(),
             onSdImportTap: _openSdMediaImport,
             onWatchedFolderTap: _openWatchedFolder,
+            onLlmSettingsTap: _openLlmSettings,
             onImportTap: _handleGalleryImport,
             onRecipesTap: _openRecipeCatalog,
             activeDevelopingCount: activeDarkroomCount,
             isWatchedFolderActive: isWatchedFolderActive,
+            isLlmModelLoaded: isLlmLoaded,
           ),
 
-          // Active Darkroom Developing Tank Banner
+          // Active Darkroom Tank Banner
           if (widget.darkroomService.hasActiveDeveloping) ...[
             GestureDetector(
               onTap: () => _openDarkroom(),

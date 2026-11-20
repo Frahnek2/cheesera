@@ -11,9 +11,12 @@ import '../../../models/photo_item.dart';
 import '../../../services/external_media/media_source_adapter.dart';
 import '../../../services/external_media/media_volume.dart';
 import '../../../services/film_engine/film_engine.dart';
+import '../../../services/llm/default_llm_curation_service.dart';
+import '../../../services/llm/llm_curation_service.dart';
 import '../../../services/recipe_service/recipe_provider.dart';
 import '../../../widgets/grain_canvas.dart';
 import '../../../widgets/tactile_button.dart';
+import '../../llm/presentation/widgets/ai_batch_curation_dialog.dart';
 
 enum TriageDecision { unreviewed, keep, reject, flag }
 
@@ -33,12 +36,14 @@ class TriageItem {
   });
 }
 
-/// Fast-Triage & Culling workflow for camera SD cards, USB OTG, and external media.
+/// Fast-Triage & Culling workflow for camera SD cards, USB OTG, and external media,
+/// enhanced with on-device LLM batch curation.
 class FastTriageScreen extends StatefulWidget {
   final MediaVolume volume;
   final FilmEngine filmEngine;
   final RecipeProvider recipeProvider;
   final MediaSourceAdapter mediaAdapter;
+  final LlmCurationService? llmService;
   final Function(List<PhotoItem> imported) onImportCompleted;
 
   const FastTriageScreen({
@@ -47,6 +52,7 @@ class FastTriageScreen extends StatefulWidget {
     required this.filmEngine,
     required this.recipeProvider,
     required this.mediaAdapter,
+    this.llmService,
     required this.onImportCompleted,
   });
 
@@ -86,7 +92,6 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
       }
     }
 
-    // If volume had no raw files or on simulator/mock: seed with realistic fast triage photos
     if (_items.isEmpty) {
       final samples = [
         SampleImagesData.getGoldenCoast(),
@@ -123,13 +128,7 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
       }
     });
 
-    if (decision == TriageDecision.keep) {
-      HapticsUtil.lightSnap();
-    } else if (decision == TriageDecision.reject) {
-      HapticsUtil.selectionTick();
-    } else {
-      HapticsUtil.selectionTick();
-    }
+    HapticsUtil.selectionTick();
   }
 
   void _applyRecipeToCurrent(FilmPreset preset) {
@@ -156,6 +155,49 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
         content: Text('Applied ${preset.name} to all KEEPS'),
         backgroundColor: AppColors.surfaceElevated,
         duration: const Duration(milliseconds: 1500),
+      ),
+    );
+  }
+
+  Future<void> _openAiBatchCuration() async {
+    HapticsUtil.selectionTick();
+    final service = widget.llmService ?? DefaultLlmCurationService();
+
+    final currentPhotos = _items.map((i) => PhotoItem(
+      id: i.id,
+      title: i.filename,
+      originalBytes: i.bytes,
+      recipe: i.recipe,
+      createdAt: DateTime.now(),
+    )).toList();
+
+    showDialog(
+      context: context,
+      builder: (_) => AiBatchCurationDialog(
+        photos: currentPhotos,
+        availableRecipes: widget.recipeProvider.recipes,
+        llmService: service,
+        onCurationCompleted: (result) {
+          setState(() {
+            final topPickIds = result.selectedTopPicks.map((p) => p.id).toSet();
+            for (final item in _items) {
+              if (topPickIds.contains(item.id)) {
+                item.decision = TriageDecision.keep;
+                final match = result.rankedPhotos.firstWhere((r) => r.photo.id == item.id);
+                item.recipe = match.recommendedRecipe;
+              } else {
+                item.decision = TriageDecision.reject;
+              }
+            }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.summaryReasoning),
+              backgroundColor: AppColors.surfaceElevated,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        },
       ),
     );
   }
@@ -207,9 +249,15 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
           ],
         ),
         actions: [
+          // AI Curation Trigger
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_rounded, color: AppColors.amberAccent, size: 20),
+            tooltip: 'On-Device AI Curation',
+            onPressed: _openAiBatchCuration,
+          ),
           // Batch Ingest Button
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: TactileButton(
               backgroundColor: keepCount > 0 ? AppColors.slideTeal : AppColors.surfaceElevated,
               foregroundColor: keepCount > 0 ? Colors.black : AppColors.textDisabled,
@@ -263,7 +311,7 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
                         ),
                       ),
 
-                      // Quick Recipe Strip (Grading on-the-fly)
+                      // Quick Recipe Strip
                       Container(
                         height: 52,
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -323,7 +371,7 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         child: Row(
                           children: [
-                            // REJECT BUTTON (Left)
+                            // REJECT BUTTON
                             Expanded(
                               child: TactileButton(
                                 backgroundColor: const Color(0xFF281313),
@@ -351,7 +399,7 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
 
                             const SizedBox(width: 10),
 
-                            // FLAG / MAYBE (Center)
+                            // FLAG / MAYBE
                             TactileButton(
                               backgroundColor: AppColors.surfaceElevated,
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -362,7 +410,7 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
 
                             const SizedBox(width: 10),
 
-                            // KEEP BUTTON (Right)
+                            // KEEP BUTTON
                             Expanded(
                               child: TactileButton(
                                 backgroundColor: const Color(0xFF132824),
@@ -423,7 +471,6 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
               child: Image.memory(item.bytes, fit: BoxFit.cover),
             ),
           ),
-          // Decision Watermark Badge
           if (item.decision != TriageDecision.unreviewed)
             Positioned(
               top: 14,
@@ -445,7 +492,6 @@ class _FastTriageScreenState extends State<FastTriageScreen> {
                 ),
               ),
             ),
-          // Bottom Info Label
           Positioned(
             left: 14,
             bottom: 12,

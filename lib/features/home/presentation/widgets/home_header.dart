@@ -4,17 +4,19 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/haptics_util.dart';
 import '../../../../widgets/tactile_button.dart';
 
-/// Minimalist analog brand header with SD card import, watched folder, disposable camera, and darkroom triggers.
+/// Minimalist analog brand header with AI LLM settings, SD card import, watched folder, disposable camera, and darkroom triggers.
 class HomeHeader extends StatelessWidget {
   final VoidCallback onCameraTap;
   final VoidCallback onDisposableTap;
   final VoidCallback onDarkroomTap;
   final VoidCallback onSdImportTap;
   final VoidCallback onWatchedFolderTap;
+  final VoidCallback onLlmSettingsTap;
   final VoidCallback onImportTap;
   final VoidCallback onRecipesTap;
   final int activeDevelopingCount;
   final bool isWatchedFolderActive;
+  final bool isLlmModelLoaded;
 
   const HomeHeader({
     super.key,
@@ -23,10 +25,12 @@ class HomeHeader extends StatelessWidget {
     required this.onDarkroomTap,
     required this.onSdImportTap,
     required this.onWatchedFolderTap,
+    required this.onLlmSettingsTap,
     required this.onImportTap,
     required this.onRecipesTap,
     this.activeDevelopingCount = 0,
     this.isWatchedFolderActive = false,
+    this.isLlmModelLoaded = false,
   });
 
   @override
@@ -83,6 +87,25 @@ class HomeHeader extends StatelessWidget {
 
             const Spacer(),
 
+            // Local LLM On-Device Engine Settings
+            TactileButton(
+              backgroundColor: isLlmModelLoaded ? AppColors.slideTeal.withOpacity(0.2) : AppColors.surfaceElevated,
+              borderColor: isLlmModelLoaded ? AppColors.slideTeal : null,
+              padding: const EdgeInsets.all(7),
+              borderRadius: 8,
+              onPressed: () {
+                HapticsUtil.selectionTick();
+                onLlmSettingsTap();
+              },
+              child: Icon(
+                Icons.memory_rounded,
+                size: 17,
+                color: isLlmModelLoaded ? AppColors.slideTeal : AppColors.amberAccent,
+              ),
+            ),
+
+            const SizedBox(width: 5),
+
             // SD Card / Camera Media Import & Fast-Triage
             TactileButton(
               backgroundColor: const Color(0xFF1B2329),
@@ -98,7 +121,7 @@ class HomeHeader extends StatelessWidget {
 
             const SizedBox(width: 5),
 
-            // Watched Folder Monitor Trigger (with active green dot indicator)
+            // Watched Folder Monitor Trigger
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -144,7 +167,7 @@ class HomeHeader extends StatelessWidget {
 
             const SizedBox(width: 5),
 
-            // Darkroom Tank (with badge)
+            // Darkroom Tank
             Stack(
               clipBehavior: Clip.none,
               children: [

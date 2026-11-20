@@ -1,14 +1,19 @@
 # cheesera 🎞️
 
-A minimalist, tactile analog film simulation, automated ingestion, and camera roll photo editor mobile app for iOS and Android.
+A minimalist, tactile analog film simulation, automated ingestion, on-device local LLM curation, and camera roll photo editor mobile app for iOS and Android.
 
-Inspired by vintage analog rangefinders, physical darkrooms, and high-speed professional photofinishing labs, **cheesera** provides zero-latency real-time film simulation, before/after comparison scrubbing, custom 3D `.cube` LUT processing, Fujifilm recipe management, a **Disposable Camera** capture mode, a **Shake-to-Develop** chemical darkroom workflow, a **Watched Folder** automated ingestion service, and an **SD Card / Camera Fast-Triage** culling station.
+Inspired by vintage analog rangefinders, physical darkrooms, and high-speed professional photofinishing labs, **cheesera** provides zero-latency real-time film simulation, before/after comparison scrubbing, custom 3D `.cube` LUT processing, Fujifilm recipe management, a **Disposable Camera** capture mode, a **Shake-to-Develop** chemical darkroom workflow, a **Watched Folder** automated ingestion service, an **SD Card / Camera Fast-Triage** culling station, and **On-Device Local LLM Curation**.
 
 ---
 
 ## ✨ Features
 
 - **100% Out-of-the-Box Zero-File Operation**: Built-in default film simulation presets (Kodak Portra 400, Kodak Tri-X 400, CineStill 800T, Fujifilm Classic Chrome, Kodak Ektachrome E100, Ilford HP5 Plus, Kodak Gold 200, Cheesera Velvet) and procedural sample photos so the app works immediately upon first launch without requiring network or external asset downloads.
+- **🧠 On-Device Local LLM Curation (`LlmCurationService`)**:
+  - **Single Photo Recipe Suggestion**: Analyzes on-device image measurements (Kelvin temperature, luminance, contrast, warmth, and dominant tones) and recommends the optimal film simulation recipe with human-like photographic rationale (e.g. recommending CineStill 800T for tungsten night shots or Portra 400 for golden hour skin tones).
+  - **Natural Language Batch Curation**: Given an open-ended prompt (e.g. *"warm golden hour vibe"*, *"punchy street colors"*, *"minimalist compositions"*, *"moody night neon"*), ranks and filters contact sheet candidates, auto-selecting the best frames and applying matching recipes.
+  - **Resilient Fallback Engine**: If no local model weights file is loaded yet, automatically falls back to an expert rule-based photographic heuristic engine with zero latency, zero internet connectivity, and zero cloud API keys needed.
+  - **GGUF / MediaPipe Model Support**: Load quantized models (e.g. `SmolLM2-1.7B-Q4_K_M.gguf`, `Llama-3.2-1B-Instruct-Q4_K_M.gguf`, `Gemma-2-2B.gguf`) directly via the built-in model manager.
 - **📁 Watched Folder Auto-Ingestion**:
   - Monitors a user-selected directory or camera drop folder in the background.
   - **Rule-Based Chemistry Assignment**: Automatically matches files based on criteria:
@@ -50,6 +55,29 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 
 ---
 
+## 🤖 On-Device Local LLM Setup & Instructions
+
+Cheesera runs 100% on-device local models without sending photos or data to third-party clouds.
+
+### Recommended Quantized Models
+- **`SmolLM2-1.7B-Instruct-Q4_K_M.gguf`** (~1.0 GB) — Fast inference, low memory footprint, excellent photographic reasoning.
+- **`Llama-3.2-1B-Instruct-Q4_K_M.gguf`** (~800 MB) — Ultra-compact, instant cold-start on mobile.
+- **`Gemma-2-2B-it-Q4_K_M.gguf`** (~1.4 GB) — Rich descriptive reasoning for creative batch culling.
+
+### Android Setup Instructions
+1. Download any compatible `.gguf` quantized model file to your Android device (e.g. to your `Download` or `Documents` directory).
+2. In Cheesera, tap the **Chip Icon (`[ ]`)** in the top navigation bar to open **On-Device Local LLM Setup**.
+3. Tap **"LOAD LOCAL .GGUF / .BIN MODEL FILE"** and select the downloaded file.
+4. Cheesera validates the GGUF header and mounts the weights for on-device inference using your device's CPU/NPU (Qualcomm QNN / MediaPipe OpenCL acceleration).
+
+### iOS Setup Instructions
+1. AirDrop the `.gguf` file to your iPhone or iPad, or copy it into the Cheesera app directory in the native **Files app** (`On My iPhone > Cheesera`).
+2. In Cheesera, tap the **Chip Icon** in the top bar.
+3. Tap **"LOAD LOCAL .GGUF / .BIN MODEL FILE"** and pick the model from the system Document Browser.
+4. The model runs using unified memory on Apple Silicon (A16/A17 Pro/M-series chips) with Apple Metal performance shaders.
+
+---
+
 ## 📱 Platform Permissions & OS Manifest Requirements
 
 ### 🤖 Android (`android/app/src/main/AndroidManifest.xml`)
@@ -64,8 +92,6 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 | `<uses-feature android:name="android.hardware.usb.host" android:required="false"/>` | Enables USB-C camera card readers and tethered cameras. |
 | `android:requestLegacyExternalStorage="true"` | Allows smooth file access when targeting Android 10/11. |
 
-> **Note on Storage Access Framework (SAF)**: On modern Android versions (11+), Cheesera uses `ACTION_OPEN_DOCUMENT_TREE` via the directory picker, allowing users to grant scoped access to external camera SD cards without requiring full root disk privileges.
-
 ### 🍎 iOS (`ios/Runner/Info.plist`)
 
 | Key | Value | Purpose |
@@ -74,7 +100,7 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 | `NSPhotoLibraryUsageDescription` | `String` | Reading photos from the user's Photos library. |
 | `NSPhotoLibraryAddUsageDescription` | `String` | Saving developed film negatives into the native Camera Roll. |
 | `UIFileSharingEnabled` | `<true/>` | Exposes the app's document folder in the iOS Files app and Finder. |
-| `LSSupportsOpeningDocumentsInPlace` | `<true/>` | **Critical for SD cards**: Allows the document picker to open and monitor external SD cards and USB-C drives connected via Apple's Lightning/USB-C Camera Adapter. |
+| `LSSupportsOpeningDocumentsInPlace` | `<true/>` | Allows the document picker to open and monitor external SD cards, USB-C drives, and local GGUF models. |
 | `UISupportsDocumentBrowser` | `<true/>` | Enables the system document browser for directory selection. |
 
 ---
@@ -112,6 +138,13 @@ lib/
 │   │   ├── lut_manager.dart            # Manages bundled & user-imported custom .cube LUTs
 │   │   ├── color_matrix_utils.dart     # Fast GPU ColorFilter 4x5 composite matrix math
 │   │   └── film_engine.dart            # Full rendering pipeline (isolate-backed export)
+│   ├── llm/
+│   │   ├── llm_models.dart             # RecipeSuggestionResult, BatchCurationResult, ImageAnalysisMetadata
+│   │   ├── image_feature_extractor.dart# On-device visual & histogram analysis (warmth, contrast, temp)
+│   │   ├── heuristic_curation_engine.dart # Photographic rule engine fallback (active when no model loaded)
+│   │   ├── local_llm_adapter.dart      # GGUF model loader & prompt formatter
+│   │   ├── llm_curation_service.dart   # Abstract LlmCurationService interface
+│   │   └── default_llm_curation_service.dart # Production coordinator with seamless fallback
 │   ├── recipe_service/
 │   │   ├── recipe_serializer.dart      # JSON & Fuji X Weekly string parser/serializer
 │   │   ├── recipe_remote_adapter.dart  # X Weekly remote fetch adapter with error resilience
@@ -138,9 +171,15 @@ lib/
     ├── disposable_camera/
     │   └── presentation/
     │       └── disposable_camera_screen.dart # Viewfinder, counter [27], flash & winder
+    ├── llm/
+    │   └── presentation/
+    │       └── widgets/
+    │           ├── ai_recipe_suggestion_sheet.dart # AI suggestion modal with reason & apply button
+    │           ├── ai_batch_curation_dialog.dart   # Prompt input with presets & ranking output
+    │           └── local_model_settings_sheet.dart # Model file picker & setup instructions (iOS & Android)
     ├── triage/
     │   └── presentation/
-    │       └── fast_triage_screen.dart # SD card rapid KEEP/REJECT/FLAG triage deck
+    │       └── fast_triage_screen.dart # SD card rapid KEEP/REJECT/FLAG triage deck + AI Curation
     ├── watched_folder/
     │   └── presentation/
     │       └── watched_folder_screen.dart # Folder monitoring configuration & activity log
@@ -164,11 +203,16 @@ lib/
 
 ## 🧪 Unit Tests
 
+- `test/llm_curation_service_test.dart`:
+  - `ImageFeatureExtractor` testing golden hour vs night neon vs studio portrait detection.
+  - `suggestRecipe` testing Portra 400 for golden hour and CineStill 800T for tungsten night.
+  - `curateBatch` testing user prompt matching (*"warm golden hour vibe"*, *"moody night neon"*).
+  - Model load/unload lifecycle and fallback verification.
 - `test/ingestion_triage_test.dart`:
-  - `IngestionRuleEngine` matching `DSCF*.jpg` to Classic Chrome with camera tags.
-  - Matching night neon keywords to CineStill 800T.
-  - Fallback logic when no specific rules match.
-  - `MockMediaSourceAdapter` volume detection and photo enumeration.
+  - `IngestionRuleEngine` matching `DSCF*.JPG` -> Fujifilm Classic Chrome with tags.
+  - Matching night keywords (`*night*`) -> CineStill 800T.
+  - Fallback logic to Portra 400 on unmatched files.
+  - `MockMediaSourceAdapter` volume discovery and external media enumeration.
 - `test/darkroom_service_test.dart`:
   - Disposable roll exposure decrementing (27 exposures max, remaining countdown).
   - 15-minute chemical developing batch queue and progress calculations.
