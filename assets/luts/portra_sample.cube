@@ -1,0 +1,17 @@
+# Cheesera Sample Portra 3D LUT (Adobe .cube format)
+TITLE "Cheesera Portra 400 2x2x2 Sample"
+LUT_3D_SIZE 2
+DOMAIN_MIN 0.0 0.0 0.0
+DOMAIN_MAX 1.0 1.0 1.0
+
+# B=0
+0.000 0.000 0.000
+1.080 0.000 0.000
+0.000 1.020 0.000
+1.080 1.020 0.000
+
+# B=1
+0.000 0.000 0.940
+1.080 0.000 0.940
+0.000 1.020 0.940
+1.080 1.020 0.940
