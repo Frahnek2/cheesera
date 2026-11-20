@@ -7,6 +7,7 @@ import '../../../models/film_preset.dart';
 import '../../../models/film_recipe.dart';
 import '../../../models/photo_item.dart';
 import '../../../services/film_engine/film_engine.dart';
+import '../../../services/recipe_service/recipe_provider.dart';
 import '../../../services/storage/export_service.dart';
 import '../../../widgets/before_after_slider.dart';
 import '../../../widgets/grain_canvas.dart';
@@ -21,11 +22,13 @@ import 'widgets/recipe_adjustment_sheet.dart';
 class EditorScreen extends StatefulWidget {
   final PhotoItem photo;
   final FilmEngine filmEngine;
+  final RecipeProvider? recipeProvider;
 
   const EditorScreen({
     super.key,
     required this.photo,
     required this.filmEngine,
+    this.recipeProvider,
   });
 
   @override
@@ -65,6 +68,7 @@ class _EditorScreenState extends State<EditorScreen> {
         builder: (context, setSheetState) {
           return RecipeAdjustmentSheet(
             recipe: _currentRecipe,
+            filmEngine: widget.filmEngine,
             onRecipeChanged: (updated) {
               setSheetState(() {});
               setState(() {
@@ -76,6 +80,19 @@ class _EditorScreenState extends State<EditorScreen> {
               setState(() {
                 _currentRecipe = _currentRecipe.reset();
               });
+            },
+            onSaveCustomRecipe: (custom) {
+              widget.recipeProvider?.saveCustomRecipe(custom);
+              setState(() {
+                _currentRecipe = custom;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Saved "${custom.title}" to Recipe Vault'),
+                  backgroundColor: AppColors.surfaceElevated,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
             },
           );
         },
@@ -106,7 +123,7 @@ class _EditorScreenState extends State<EditorScreen> {
     );
 
     try {
-      // 1. Render high-resolution image using FilmEngine
+      // 1. Render high-resolution image using FilmEngine (including custom 3D LUT if attached)
       final renderedBytes = await widget.filmEngine.renderFullResolution(
         sourceBytes: widget.photo.originalBytes,
         recipe: _currentRecipe,
@@ -179,7 +196,7 @@ class _EditorScreenState extends State<EditorScreen> {
           // Chemistry Drawer Icon
           IconButton(
             icon: const Icon(Icons.tune_rounded, color: AppColors.amberAccent),
-            tooltip: 'Fine-tune Recipe',
+            tooltip: 'Fine-tune Recipe & 3D LUT',
             onPressed: _openAdjustmentSheet,
           ),
           const SizedBox(width: 4),
@@ -232,12 +249,10 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: _isHoldingRaw
-                          // User is holding down "HOLD: RAW" -> show pure untouched photo
                           ? Image.memory(
                               widget.photo.originalBytes,
                               fit: BoxFit.cover,
                             )
-                          // Normal state: Interactive Before / After Split Slider
                           : BeforeAfterSlider(
                               beforeChild: Image.memory(
                                 widget.photo.originalBytes,
@@ -261,7 +276,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
-            // Bottom Section: Film Preset Carousel & Quick Stats
+            // Bottom Section: Film Preset Carousel
             Container(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
               decoration: const BoxDecoration(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../core/utils/haptics_util.dart';
+import '../../../models/film_recipe.dart';
 import '../../../models/photo_item.dart';
 import '../../../services/film_engine/film_engine.dart';
 import '../../../services/media/photo_service.dart';
+import '../../../services/recipe_service/recipe_provider.dart';
 import '../../../widgets/film_frame_card.dart';
 import '../../editor/presentation/editor_screen.dart';
 import 'widgets/home_header.dart';
@@ -14,11 +15,13 @@ import 'widgets/recipe_catalog_sheet.dart';
 class HomeScreen extends StatefulWidget {
   final FilmEngine filmEngine;
   final PhotoService photoService;
+  final RecipeProvider recipeProvider;
 
   const HomeScreen({
     super.key,
     required this.filmEngine,
     required this.photoService,
+    required this.recipeProvider,
   });
 
   @override
@@ -32,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-populate with built-in zero-file sample photos
     _photos = widget.photoService.getInitialSamplePhotos();
   }
 
@@ -67,7 +69,17 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const RecipeCatalogSheet(),
+      builder: (_) => RecipeCatalogSheet(
+        recipeProvider: widget.recipeProvider,
+        onSelectRecipe: (selected) {
+          if (_photos.isNotEmpty) {
+            setState(() {
+              _photos[0] = _photos[0].copyWith(recipe: selected);
+            });
+            _openEditor(_photos[0]);
+          }
+        },
+      ),
     );
   }
 
@@ -77,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => EditorScreen(
           photo: photo,
           filmEngine: widget.filmEngine,
+          recipeProvider: widget.recipeProvider,
         ),
       ),
     );

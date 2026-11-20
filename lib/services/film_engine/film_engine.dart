@@ -7,17 +7,21 @@ import '../../models/photo_item.dart';
 import 'color_matrix_utils.dart';
 import 'cube_lut.dart';
 import 'cube_lut_parser.dart';
+import 'lut_manager.dart';
 import 'lut_processor.dart';
 
 /// The core image rendering engine for Cheesera.
-/// Coordinates real-time GPU matrix transforms, 3D LUT processing,
+/// Coordinates real-time GPU matrix transforms, 3D .cube LUT processing,
 /// analog grain synthesis, vignette, and high-resolution export.
 class FilmEngine {
   final LutProcessor lutProcessor;
+  final LutManager lutManager;
 
   FilmEngine({
     LutProcessor? lutProcessor,
-  }) : lutProcessor = lutProcessor ?? const DefaultLutProcessor();
+    LutManager? lutManager,
+  })  : lutProcessor = lutProcessor ?? const DefaultLutProcessor(),
+        lutManager = lutManager ?? LutManager(lutProcessor: lutProcessor);
 
   /// Returns real-time GPU ColorFilter matrix for instantaneous UI response.
   List<double> getPreviewColorMatrix(FilmRecipe recipe) {
@@ -30,13 +34,28 @@ class FilmEngine {
   }
 
   /// Renders a full-resolution processed photo ready for export to camera roll.
-  /// Runs inside compute/isolate if requested or directly on background threads.
+  /// Applies 3D LUT (if attached to recipe), matrix grading, grain, and vignette.
   Future<Uint8List> renderFullResolution({
     required Uint8List sourceBytes,
     required FilmRecipe recipe,
     FrameRatio frameRatio = FrameRatio.ratio4_5,
     bool addAnalogFrame = false,
   }) async {
+    Float32List? lutTable;
+    int? lutSize;
+    Float32List? lutMin;
+    Float32List? lutMax;
+
+    if (recipe.customLutId != null) {
+      final lut = await lutManager.getLut(recipe.customLutId!);
+      if (lut != null) {
+        lutTable = lut.table;
+        lutSize = lut.size;
+        lutMin = lut.domainMin;
+        lutMax = lut.domainMax;
+      }
+    }
+
     return compute(_renderPipeline, {
       'sourceBytes': sourceBytes,
       'matrix': ColorMatrixUtils.calculateMatrix(recipe),
@@ -46,8 +65,10 @@ class FilmEngine {
       'fade': recipe.fade,
       'aspectRatio': frameRatio.aspectRatio,
       'addAnalogFrame': addAnalogFrame,
-      'filmName': recipe.preset.name,
-      'iso': recipe.preset.iso,
+      'lutTable': lutTable,
+      'lutSize': lutSize,
+      'lutMin': lutMin,
+      'lutMax': lutMax,
     });
   }
 
@@ -60,8 +81,10 @@ class FilmEngine {
     final double vignette = params['vignette'];
     final double aspectRatio = params['aspectRatio'];
     final bool addAnalogFrame = params['addAnalogFrame'];
-    final String filmName = params['filmName'];
-    final int iso = params['iso'];
+    final Float32List? lutTable = params['lutTable'];
+    final int? lutSize = params['lutSize'];
+    final Float32List? lutMin = params['lutMin'];
+    final Float32List? lutMax = params['lutMax'];
 
     img.Image? image = img.decodeImage(sourceBytes);
     if (image == null) return sourceBytes;
@@ -71,11 +94,9 @@ class FilmEngine {
     if ((currentAspect - aspectRatio).abs() > 0.05) {
       int targetW, targetH;
       if (currentAspect > aspectRatio) {
-        // Image is wider than desired ratio
         targetH = image.height;
         targetW = (image.height * aspectRatio).round();
       } else {
-        // Image is taller than desired ratio
         targetW = image.width;
         targetH = (image.width / aspectRatio).round();
       }
@@ -86,35 +107,51 @@ class FilmEngine {
 
     final int width = image.width;
     final int height = image.height;
-    final random = math.Random(42); // Deterministic seed for consistent organic grain
+    final random = math.Random(42);
 
     final double centerX = width / 2.0;
     final double centerY = height / 2.0;
     final double maxDist = math.sqrt(centerX * centerX + centerY * centerY);
 
-    // 2. Pixel-level processing: Matrix Color Grade + Grain + Vignette
+    Lut3D? activeLut;
+    if (lutTable != null && lutSize != null) {
+      activeLut = Lut3D(
+        size: lutSize,
+        domainMin: lutMin,
+        domainMax: lutMax,
+        table: lutTable,
+      );
+    }
+
+    // 2. Pixel-level processing: 3D LUT + Matrix + Grain + Vignette
     for (int y = 0; y < height; y++) {
       final double dy = y - centerY;
       for (int x = 0; x < width; x++) {
         final pixel = image.getPixel(x, y);
 
-        final double rIn = pixel.r.toDouble();
-        final double gIn = pixel.g.toDouble();
-        final double bIn = pixel.b.toDouble();
+        double r = pixel.r.toDouble();
+        double g = pixel.g.toDouble();
+        double b = pixel.b.toDouble();
 
-        // 2a. Apply 4x5 Color Grading Matrix
-        double rOut = matrix[0] * rIn + matrix[1] * gIn + matrix[2] * bIn + matrix[4];
-        double gOut = matrix[5] * rIn + matrix[6] * gIn + matrix[7] * bIn + matrix[9];
-        double bOut = matrix[10] * rIn + matrix[11] * gIn + matrix[12] * bIn + matrix[14];
+        // 2a. Apply 3D LUT if present (via trilinear interpolation)
+        if (activeLut != null) {
+          final sampled = activeLut.sample(r / 255.0, g / 255.0, b / 255.0);
+          r = sampled[0] * 255.0;
+          g = sampled[1] * 255.0;
+          b = sampled[2] * 255.0;
+        }
 
-        // 2b. Organic Silver Halide Film Grain Synthesis
+        // 2b. Apply 4x5 Color Grading Matrix & Recipe offsets
+        double rOut = matrix[0] * r + matrix[1] * g + matrix[2] * b + matrix[4];
+        double gOut = matrix[5] * r + matrix[6] * g + matrix[7] * b + matrix[9];
+        double bOut = matrix[10] * r + matrix[11] * g + matrix[12] * b + matrix[14];
+
+        // 2c. Organic Silver Halide Film Grain Synthesis
         if (grainAmount > 0.01) {
-          // Box-Muller transform for realistic Gaussian noise
           final double u1 = random.nextDouble().clamp(0.0001, 1.0);
           final double u2 = random.nextDouble();
           final double gaussian = math.sqrt(-2.0 * math.log(u1)) * math.cos(2.0 * math.pi * u2);
 
-          // Film grain is naturally more prominent in midtones than deep blacks/highlights
           final double luminance = (0.299 * rOut + 0.587 * gOut + 0.114 * bOut) / 255.0;
           final double midtoneMask = (1.0 - (luminance - 0.5).abs() * 1.5).clamp(0.2, 1.0);
 
@@ -124,7 +161,7 @@ class FilmEngine {
           bOut += grainIntensity;
         }
 
-        // 2c. Optical Vignette Falloff
+        // 2d. Optical Vignette Falloff
         if (vignette > 0.01) {
           final double dx = x - centerX;
           final double dist = math.sqrt(dx * dx + dy * dy);
@@ -142,7 +179,7 @@ class FilmEngine {
       }
     }
 
-    // 3. Optional vintage film rebate / border framing
+    // 3. Optional vintage film rebate framing
     if (addAnalogFrame) {
       final borderThickness = (width * 0.035).round();
       final framed = img.Image(
@@ -150,7 +187,7 @@ class FilmEngine {
         height: height + borderThickness * 2 + (width * 0.05).round(),
         numChannels: 4,
       );
-      img.fill(framed, color: img.ColorRgb8(12, 13, 15)); // Film slate border
+      img.fill(framed, color: img.ColorRgb8(12, 13, 15));
       img.compositeImage(framed, image, dstX: borderThickness, dstY: borderThickness);
       image = framed;
     }

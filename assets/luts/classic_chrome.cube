@@ -1,0 +1,17 @@
+# Cheesera Classic Chrome 3D LUT (Adobe .cube format)
+TITLE "Fujifilm Classic Chrome 2x2x2 Sample"
+LUT_3D_SIZE 2
+DOMAIN_MIN 0.0 0.0 0.0
+DOMAIN_MAX 1.0 1.0 1.0
+
+# B=0
+0.000 0.000 0.000 # Black point
+0.950 0.040 0.020 # Red edge (muted documentary)
+0.030 0.920 0.040 # Green edge
+0.960 0.940 0.050 # Yellow
+
+# B=1
+0.020 0.030 0.880 # Blue edge
+0.940 0.050 0.890 # Magenta
+0.040 0.930 0.900 # Cyan
+0.980 0.980 0.970 # White point (soft warm roll-off)
