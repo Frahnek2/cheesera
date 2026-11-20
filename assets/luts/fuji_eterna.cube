@@ -1,0 +1,17 @@
+# Cheesera Eterna Cinema 3D LUT (Adobe .cube format)
+TITLE "Fujifilm Eterna Cinema 2x2x2 Sample"
+LUT_3D_SIZE 2
+DOMAIN_MIN 0.0 0.0 0.0
+DOMAIN_MAX 1.0 1.0 1.0
+
+# B=0
+0.040 0.040 0.040 # Soft lifted cinematic black
+0.900 0.060 0.040 # Muted red
+0.050 0.880 0.050 # Muted green
+0.910 0.890 0.060 # Soft warm midtone
+
+# B=1
+0.040 0.050 0.860 # Deep teal
+0.890 0.060 0.870 # Soft lavender
+0.050 0.890 0.880 # Soft cyan
+0.950 0.950 0.940 # Highlight compression
