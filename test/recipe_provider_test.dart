@@ -6,6 +6,7 @@ import 'package:cheesera/services/recipe_service/recipe_provider.dart';
 import 'package:cheesera/services/recipe_service/recipe_remote_adapter.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('RecipeProvider & Offline Fallback Tests', () {
     test('Successful remote sync merges remote recipes and caches them offline', () async {
       const mockPayload = '''

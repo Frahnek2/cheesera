@@ -8,6 +8,7 @@ import 'package:cheesera/services/darkroom/darkroom_models.dart';
 import 'package:cheesera/services/darkroom/darkroom_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Disposable Camera & Shake-to-Develop Darkroom Tests', () {
     test('DisposableRoll accurately tracks 27 exposures and winding state', () {
       final roll = DisposableRoll(
