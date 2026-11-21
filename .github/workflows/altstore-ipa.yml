@@ -1,0 +1,73 @@
+name: Build AltStore IPA
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Ensure full iOS project is generated
+        run: flutter create --platforms=ios --org com.cheesera . || true
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build unsigned iOS app (xcodebuild)
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/xc \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee xcodebuild.log
+
+      - name: Package Runner.app into .ipa
+        run: |
+          APP_PATH=$(find build/xc/Build/Products -name "Runner.app" -maxdepth 4 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Runner.app not found in build/xc/Build/Products"
+            find build/xc/Build/Products -type d | head -20
+            exit 1
+          fi
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -qry cheesera-altstore.ipa Payload
+
+      - name: Upload .ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cheesera-altstore-ipa
+          path: cheesera-altstore.ipa
+
+      - name: Upload xcodebuild log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log
