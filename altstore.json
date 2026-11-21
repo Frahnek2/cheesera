@@ -1,0 +1,55 @@
+{
+  "name": "Cheesera Source",
+  "subtitle": "Tactile analog film camera & simulation",
+  "description": "Minimalist, tactile analog film simulation app with Fujifilm recipes, custom 3D LUT support, disposable camera rolls, and chemical darkroom timers.",
+  "iconURL": "https://raw.githubusercontent.com/Frahnek2/cheesera/main/assets/%28cheesera%29%20logo.png",
+  "headerURL": "https://raw.githubusercontent.com/Frahnek2/cheesera/main/assets/%28cheesera%29%20logo.png",
+  "website": "https://github.com/Frahnek2/cheesera",
+  "tintColor": "#D97706",
+  "featuredApps": [
+    "com.cheesera.app"
+  ],
+  "apps": [
+    {
+      "name": "Cheesera",
+      "bundleIdentifier": "com.cheesera.app",
+      "developerName": "Franek Skalski",
+      "subtitle": "Analog film simulation & recipes",
+      "localizedDescription": "Cheesera is a clean, tactile mobile film simulation app designed for photographers. Features authentic Fujifilm-style recipe simulation, custom 3D .cube LUT importing, disposable camera capture mode, shake-to-develop chemical darkroom timers, external camera/SD-card fast triage, and on-device smart curation.",
+      "iconURL": "https://raw.githubusercontent.com/Frahnek2/cheesera/main/assets/%28cheesera%29%20logo.png",
+      "tintColor": "#D97706",
+      "screenshots": [],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-21T12:00:00-00:00",
+          "size": 25000000,
+          "downloadURL": "https://github.com/Frahnek2/cheesera/releases/latest/download/cheesera-altstore.ipa",
+          "localizedDescription": "Initial release of Cheesera featuring analog film simulation, custom 3D LUT engine, disposable rolls, and shake-to-develop darkroom.",
+          "minOSVersion": "13.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSCameraUsageDescription": "Cheesera needs camera access to capture analog-style film photographs.",
+          "NSPhotoLibraryUsageDescription": "Cheesera needs access to your photo library to import photos for film simulation grading.",
+          "NSPhotoLibraryAddUsageDescription": "Cheesera needs permission to save graded film photographs to your camera roll."
+        }
+      }
+    }
+  ],
+  "news": [
+    {
+      "title": "Welcome to Cheesera 1.0",
+      "identifier": "cheesera_launch",
+      "caption": "Experience tactile analog film emulation directly on iOS.",
+      "date": "2026-11-21",
+      "tintColor": "#D97706",
+      "imageURL": "https://raw.githubusercontent.com/Frahnek2/cheesera/main/assets/%28cheesera%29%20logo.png",
+      "notify": true,
+      "url": "https://github.com/Frahnek2/cheesera",
+      "appID": "com.cheesera.app"
+    }
+  ]
+}
