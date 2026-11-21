@@ -3,13 +3,13 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
+    branches: [ main, beta ]
     tags:
       - 'v*'
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,3 +37,4 @@ jobs:
         with:
           name: cheesera-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
