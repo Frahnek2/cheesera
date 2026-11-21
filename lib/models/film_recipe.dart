@@ -27,7 +27,8 @@ class FilmRecipe {
   final double shadows; // -1.0 to +1.0
   final double grainAmount; // 0.0 to 1.0
   final double grainSizeValue; // 0.5 to 2.0
-  double get grainSize => grainSizeValue;
+  /// Numeric alias for [grainSizeValue] used by the rendering pipeline.
+  double get grainSizeAmount => grainSizeValue;
   final double fade; // 0.0 to 0.5 (matte black floor)
   final double vignette; // 0.0 to 1.0
 

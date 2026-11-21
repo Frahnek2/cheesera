@@ -60,7 +60,7 @@ class FilmEngine {
       'sourceBytes': sourceBytes,
       'matrix': ColorMatrixUtils.calculateMatrix(recipe),
       'grainAmount': recipe.grainAmount,
-      'grainSize': recipe.grainSize,
+      'grainSize': recipe.grainSizeAmount,
       'vignette': recipe.vignette,
       'fade': recipe.fade,
       'aspectRatio': frameRatio.aspectRatio,
