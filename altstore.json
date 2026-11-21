@@ -7,12 +7,12 @@
   "website": "https://github.com/Frahnek2/cheesera",
   "tintColor": "#D97706",
   "featuredApps": [
-    "com.cheesera.app"
+    "com.cheesera.cheesera"
   ],
   "apps": [
     {
       "name": "Cheesera",
-      "bundleIdentifier": "com.cheesera.app",
+      "bundleIdentifier": "com.cheesera.cheesera",
       "developerName": "Franek Skalski",
       "subtitle": "Analog film simulation & recipes",
       "localizedDescription": "Cheesera is a clean, tactile mobile film simulation app designed for photographers. Features authentic Fujifilm-style recipe simulation, custom 3D .cube LUT importing, disposable camera capture mode, shake-to-develop chemical darkroom timers, external camera/SD-card fast triage, and on-device smart curation.",
@@ -49,7 +49,7 @@
       "imageURL": "https://raw.githubusercontent.com/Frahnek2/cheesera/main/assets/%28cheesera%29%20logo.png",
       "notify": true,
       "url": "https://github.com/Frahnek2/cheesera",
-      "appID": "com.cheesera.app"
+      "appID": "com.cheesera.cheesera"
     }
   ]
 }
