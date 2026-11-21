@@ -3,13 +3,13 @@ name: Build AltStore IPA
 on:
   workflow_dispatch:
   push:
+    branches: [ main, beta ]
     tags:
       - 'v*'
 
 jobs:
   build-ipa:
     runs-on: macos-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,54 +20,53 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Flutter dependencies
-        run: flutter pub get
+      - name: Generate iOS scaffolding
+        run: flutter create --platforms=ios --org com.cheesera .
 
-      - name: Ensure full iOS project is generated
-        run: flutter create --platforms=ios --org com.cheesera . || true
+      - name: Install dependencies
+        run: flutter pub get
 
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update
 
-      - name: Build unsigned iOS app (xcodebuild)
+      - name: Build unsigned iOS app
         run: |
           set -o pipefail
-          flutter build ios --release --no-codesign
-          xcodebuild \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build/xc \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee xcodebuild.log
+          # Attempt flutter build ios first; fallback to config-only + xcodebuild if code signing blocks it
+          flutter build ios --release --no-codesign || {
+            echo "Direct flutter build failed; running explicit xcodebuild with unsigned overrides..."
+            flutter build ios --release --no-codesign --config-only
+            xcodebuild \
+              -workspace ios/Runner.xcworkspace \
+              -scheme Runner \
+              -configuration Release \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath build/xc \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+          }
 
-      - name: Package Runner.app into .ipa
+      - name: Package Runner.app into AltStore IPA
         run: |
-          APP_PATH=$(find build/xc/Build/Products -name "Runner.app" -maxdepth 4 | head -1)
+          APP_PATH=$(find build -name "Runner.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Runner.app not found in build/xc/Build/Products"
-            find build/xc/Build/Products -type d | head -20
+            echo "ERROR: Runner.app not found anywhere in build directory"
+            find build -type d | head -30
             exit 1
           fi
+          echo "Found app bundle at: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -qry cheesera-altstore.ipa Payload
 
-      - name: Upload .ipa artifact
+      - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: cheesera-altstore-ipa
           path: cheesera-altstore.ipa
-
-      - name: Upload xcodebuild log (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: xcodebuild-log
-          path: xcodebuild.log
+          if-no-files-found: error
