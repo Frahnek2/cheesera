@@ -26,11 +26,8 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android scaffolding
-        run: |
-          flutter create --platforms=android --org com.cheesera .
-          # Remove duplicate kts files created by modern flutter create to prevent conflicts with .gradle
-          rm -f android/build.gradle.kts android/settings.gradle.kts android/app/build.gradle.kts
+      - name: Ensure Gradle wrapper executable
+        run: chmod +x android/gradlew
 
       - name: Install dependencies
         run: flutter pub get
