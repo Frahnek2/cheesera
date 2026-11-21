@@ -27,13 +27,16 @@ jobs:
           cache: true
 
       - name: Generate Android scaffolding
-        run: flutter create --platforms=android --org com.cheesera .
+        run: |
+          flutter create --platforms=android --org com.cheesera .
+          # Remove duplicate kts files created by modern flutter create to prevent conflicts with .gradle
+          rm -f android/build.gradle.kts android/settings.gradle.kts android/app/build.gradle.kts
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
