@@ -26,6 +26,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Generate Android scaffolding
+        run: flutter create --platforms=android --org com.cheesera .
+
       - name: Install dependencies
         run: flutter pub get
 

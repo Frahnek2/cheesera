@@ -26,17 +26,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-
       - name: Build unsigned iOS app
         run: |
           set -o pipefail
-          # Attempt flutter build ios first; fallback to config-only + xcodebuild if code signing blocks it
+          # Build without codesigning
           flutter build ios --release --no-codesign || {
-            echo "Direct flutter build failed; running explicit xcodebuild with unsigned overrides..."
+            echo "Direct flutter build failed; running config-only then xcodebuild with unsigned overrides..."
             flutter build ios --release --no-codesign --config-only
             xcodebuild \
               -workspace ios/Runner.xcworkspace \
