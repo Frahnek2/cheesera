@@ -55,6 +55,95 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 
 ---
 
+## 📦 Installation & Download
+
+### 🍎 iOS Installation
+
+#### Method 1: AltStore / SideStore (Recommended 1-Click Source)
+You can add Cheesera directly as a custom source in **AltStore** or **SideStore**:
+
+1. Open **AltStore** or **SideStore** on your iOS device.
+2. Navigate to the **Sources** or **Browse** tab and tap **`+`** (or **Add Source**).
+3. Paste the following Source URL:
+   ```text
+   https://raw.githubusercontent.com/Frahnek2/cheesera/main/altstore.json
+   ```
+4. Tap **Add Source**. **Cheesera** will now appear in your catalog with automatic update tracking.
+5. Tap **FREE** or **INSTALL** to install the app directly onto your device.
+
+#### Method 2: Direct IPA Sideloading
+If you prefer sideloading manually via **AltStore**, **SideStore**, **Sideloadly**, or **TrollStore**:
+
+1. Download the latest `cheesera-altstore.ipa` from the [GitHub Releases](https://github.com/Frahnek2/cheesera/releases/latest) page.
+2. In AltStore, navigate to **My Apps**, tap **`+`**, and select the downloaded `.ipa` file.
+3. AltStore will sign and install Cheesera onto your device.
+
+---
+
+### 🤖 Android Installation
+
+1. Download `app-release.apk` (or `cheesera-apk`) from the [GitHub Releases](https://github.com/Frahnek2/cheesera/releases/latest) page or the **Actions** artifact tab.
+2. Open the downloaded file on your Android device.
+3. If prompted, allow your browser/file manager to *"Install unknown apps"*.
+4. Tap **Install** and launch Cheesera.
+
+---
+
+## 🛠️ Building from Source
+
+### Prerequisites
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.24.x or newer, `stable` channel)
+- [Dart SDK](https://dart.dev/get-dart) (`>= 3.0.0 < 4.0.0`)
+- **Android**: Java 17 (Temurin/OpenJDK), Android SDK (API 34), Android Studio
+- **iOS / macOS**: macOS with Xcode 15+ and CocoaPods
+
+### 1. Clone & Fetch Dependencies
+```bash
+git clone https://github.com/Frahnek2/cheesera.git
+cd cheesera
+flutter pub get
+```
+
+### 2. Run Tests
+Verify all unit tests pass (LUT parser, Fuji recipe serializer, rule engine, darkroom queue, local curation):
+```bash
+flutter test
+```
+
+### 3. Run Locally in Debug Mode
+```bash
+# Run on connected iOS device, Android device, or simulator
+flutter run
+```
+
+### 4. Build Android Release APK
+```bash
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+### 5. Build iOS Unsigned IPA (AltStore / Sideload Package)
+```bash
+# 1. Compile the release iOS application without code signing
+flutter build ios --release --no-codesign
+
+# 2. Package the Runner.app into an unsigned .ipa archive
+mkdir -p Payload
+cp -r build/ios/iphoneos/Runner.app Payload/
+zip -qry cheesera-altstore.ipa Payload
+
+# Output: cheesera-altstore.ipa
+```
+
+### 6. Automated CI/CD (GitHub Actions)
+Cheesera includes continuous delivery workflows in `.github/workflows/`:
+- **`altstore-ipa.yml`**: Runs on macOS runners, generates iOS project files, builds unsigned release binaries, packages `cheesera-altstore.ipa`, and uploads it as a workflow artifact.
+- **`android-apk.yml`**: Runs on Ubuntu runners with Java 17, compiles release APKs using the modern Flutter declarative Gradle plugin, and uploads `cheesera-apk`.
+
+Workflows automatically trigger on pushes to `main` and `beta`, version release tags (`v*`), or via manual trigger (**Actions > Run workflow**).
+
+---
+
 ## 🤖 On-Device Local LLM Setup & Instructions
 
 Cheesera runs 100% on-device local models without sending photos or data to third-party clouds.
