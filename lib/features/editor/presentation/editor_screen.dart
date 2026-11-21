@@ -290,7 +290,7 @@ class _EditorScreenState extends State<EditorScreen> {
                               ),
                               afterChild: GrainCanvas(
                                 amount: _currentRecipe.grainAmount,
-                                size: _currentRecipe.grainSize,
+                                size: _currentRecipe.grainSizeAmount,
                                 child: ColorFiltered(
                                   colorFilter: ColorFilter.matrix(previewMatrix),
                                   child: Image.memory(

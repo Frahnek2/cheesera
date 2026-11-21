@@ -94,7 +94,7 @@ class FilmFrameCard extends StatelessWidget {
                 aspectRatio: photo.frameRatio.aspectRatio,
                 child: GrainCanvas(
                   amount: photo.recipe.grainAmount,
-                  size: photo.recipe.grainSize,
+                  size: photo.recipe.grainSizeAmount,
                   child: ColorFiltered(
                     colorFilter: ColorFilter.matrix(matrix),
                     child: Image.memory(
