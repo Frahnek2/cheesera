@@ -6,15 +6,15 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 
 ---
 
-## ✨ Features
+##  Features
 
 - **100% Out-of-the-Box Zero-File Operation**: Built-in default film simulation presets (Kodak Portra 400, Kodak Tri-X 400, CineStill 800T, Fujifilm Classic Chrome, Kodak Ektachrome E100, Ilford HP5 Plus, Kodak Gold 200, Cheesera Velvet) and procedural sample photos so the app works immediately upon first launch without requiring network or external asset downloads.
-- **🧠 On-Device Local LLM Curation (`LlmCurationService`)**:
+- ** On-Device Local LLM Curation (`LlmCurationService`)**:
   - **Single Photo Recipe Suggestion**: Analyzes on-device image measurements (Kelvin temperature, luminance, contrast, warmth, and dominant tones) and recommends the optimal film simulation recipe with human-like photographic rationale (e.g. recommending CineStill 800T for tungsten night shots or Portra 400 for golden hour skin tones).
   - **Natural Language Batch Curation**: Given an open-ended prompt (e.g. *"warm golden hour vibe"*, *"punchy street colors"*, *"minimalist compositions"*, *"moody night neon"*), ranks and filters contact sheet candidates, auto-selecting the best frames and applying matching recipes.
   - **Resilient Fallback Engine**: If no local model weights file is loaded yet, automatically falls back to an expert rule-based photographic heuristic engine with zero latency, zero internet connectivity, and zero cloud API keys needed.
   - **GGUF / MediaPipe Model Support**: Load quantized models (e.g. `SmolLM2-1.7B-Q4_K_M.gguf`, `Llama-3.2-1B-Instruct-Q4_K_M.gguf`, `Gemma-2-2B.gguf`) directly via the built-in model manager.
-- **📁 Watched Folder Auto-Ingestion**:
+- ** Watched Folder Auto-Ingestion**:
   - Monitors a user-selected directory or camera drop folder in the background.
   - **Rule-Based Chemistry Assignment**: Automatically matches files based on criteria:
     * Filename patterns (`(?i)^DSCF.*` -> Classic Chrome, `.*night.*` -> CineStill 800T, `.*mono.*` -> Tri-X 400).
@@ -22,23 +22,23 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
     * File extensions (`.jpg`, `.dng`, `.raw`).
   - Auto-attaches tags, develops, and adds photos directly to the main feed with zero manual interaction.
   - Live activity log and background monitoring toggle.
-- **⚡ Camera / SD / SDHC Import & Fast Triage**:
+- ** Camera / SD / SDHC Import & Fast Triage**:
   - Automatically detects connected removable storage (SD Cards, USB-C OTG cameras, DCIM folders) via `PlatformMediaSourceAdapter` and Storage Access Framework (SAF) tree picker.
   - **High-Speed Culling Deck**:
     * Tactile actions: **KEEP (✓)**, **REJECT (✗)**, **FLAG/MAYBE (★)**.
     * **Quick Recipe Apply Ribbon**: Grade photos on-the-fly or long-press to batch apply a recipe across all selected KEEPS!
     * Batch Ingestion: One-tap import of all approved keeps directly into the gallery.
-- **📷 Disposable Camera Mode**:
+- ** Disposable Camera Mode**:
   - Tactile vintage chassis with optical viewfinder, crosshair framing, and flash capacitor ready indicator.
   - Flash modes (`OFF`, `ON`, `AUTO`) with realistic flash burst simulation.
   - **Mechanical Exposure Counter**: Top LCD displaying remaining frames `EXP [ 27 ]` down to `[ 00 ]`.
   - **Thumb Advance Winder Mechanism**: Rotating winder gear with mechanical ratchet sound and haptic ticks; must advance film before each shot.
   - Direct "Develop Roll" seal button bringing finished rolls straight to the darkroom tank.
-- **🧪 Shake-to-Develop Darkroom Workflow**:
+- ** Shake-to-Develop Darkroom Workflow**:
   - Queue negatives into a 15-minute chemical developing bath tank.
   - **Physical Device Shake Agitation**: Uses `sensors_plus` to monitor accelerometer G-force; shaking the phone agitates chemicals with liquid bubble animation and haptics (plus on-screen manual "Agitate Tank" button for non-sensor environments).
   - **Persistent Progress**: Countdown timer (`14:58 REMAINING`) and developing state persist across app backgrounding and full phone restarts (`darkroom_queue.json`).
-  - **⚡ Dev/Testing Toggle**: Includes an instant-complete skip toggle (`⚡ DEV: SKIP 15M` / `instantCompleteDev()`) directly accessible in the darkroom UI and service to immediately complete the 15-minute timer during development and testing.
+  - ** Dev/Testing Toggle**: Includes an instant-complete skip toggle (` DEV: SKIP 15M` / `instantCompleteDev()`) directly accessible in the darkroom UI and service to immediately complete the 15-minute timer during development and testing.
 - **Custom 3D .cube LUT Engine**:
   - Parse, validate, and apply standard Adobe `.cube` files (17x17x17, 33x33x33, 65x65x65).
   - In-memory caching and 3D trilinear interpolation (`sample(r, g, b)`).
@@ -55,9 +55,9 @@ Inspired by vintage analog rangefinders, physical darkrooms, and high-speed prof
 
 ---
 
-## 📦 Installation & Download
+##  Installation & Download
 
-### 🍎 iOS Installation
+###  iOS Installation
 
 #### Method 1: AltStore / SideStore (Recommended 1-Click Source)
 You can add Cheesera directly as a custom source in **AltStore** or **SideStore**:
@@ -80,7 +80,7 @@ If you prefer sideloading manually via **AltStore**, **SideStore**, **Sideloadly
 
 ---
 
-### 🤖 Android Installation
+###  Android Installation
 
 1. Download `app-release.apk` (or `cheesera-apk`) from the [GitHub Releases](https://github.com/Frahnek2/cheesera/releases/latest) page or the **Actions** artifact tab.
 2. Open the downloaded file on your Android device.
@@ -89,7 +89,7 @@ If you prefer sideloading manually via **AltStore**, **SideStore**, **Sideloadly
 
 ---
 
-## 🛠️ Building from Source
+##  Building from Source
 
 ### Prerequisites
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.24.x or newer, `stable` channel)
@@ -144,7 +144,7 @@ Workflows automatically trigger on pushes to `main` and `beta`, version release 
 
 ---
 
-## 🤖 On-Device Local LLM Setup & Instructions
+##  On-Device Local LLM Setup & Instructions
 
 Cheesera runs 100% on-device local models without sending photos or data to third-party clouds.
 
@@ -167,9 +167,9 @@ Cheesera runs 100% on-device local models without sending photos or data to thir
 
 ---
 
-## 📱 Platform Permissions & OS Manifest Requirements
+##  Platform Permissions & OS Manifest Requirements
 
-### 🤖 Android (`android/app/src/main/AndroidManifest.xml`)
+###  Android (`android/app/src/main/AndroidManifest.xml`)
 
 | Permission / Flag | Purpose |
 |---|---|
@@ -181,7 +181,7 @@ Cheesera runs 100% on-device local models without sending photos or data to thir
 | `<uses-feature android:name="android.hardware.usb.host" android:required="false"/>` | Enables USB-C camera card readers and tethered cameras. |
 | `android:requestLegacyExternalStorage="true"` | Allows smooth file access when targeting Android 10/11. |
 
-### 🍎 iOS (`ios/Runner/Info.plist`)
+###  iOS (`ios/Runner/Info.plist`)
 
 | Key | Value | Purpose |
 |---|---|---|
@@ -194,7 +194,7 @@ Cheesera runs 100% on-device local models without sending photos or data to thir
 
 ---
 
-## 🏛️ Clean Architecture Structure
+##  Clean Architecture Structure
 
 ```
 lib/
@@ -290,7 +290,7 @@ lib/
 
 ---
 
-## 🧪 Unit Tests
+##  Unit Tests
 
 - `test/llm_curation_service_test.dart`:
   - `ImageFeatureExtractor` testing golden hour vs night neon vs studio portrait detection.
